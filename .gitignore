@@ -1,0 +1,27 @@
+# dependencies
+**/node_modules/
+
+# builds
+desktop/dist/
+desktop/out/
+
+# logs
+*.log
+
+# environment
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# archives
+*.rar
+*.zip
+
+# large files
+*.exe
+*.apk
+*.dmg
+*.AppImage
+*.iso
