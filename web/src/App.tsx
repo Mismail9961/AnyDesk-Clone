@@ -37,7 +37,7 @@ interface ControlRequest { from: string; fromPlatform: string; fromRole: string;
 function useWebRTC(socket: Socket | null, sessionId: string | null) {
   const pcRef      = useRef<RTCPeerConnection | null>(null);
   const streamRef  = useRef<MediaStream | null>(null);
-  const videoRef   = useRef<HTMLVideoElement | null>(null);
+  const videoRef   = useRef<HTMLVideoElement>(null);
   const [rtcState, setRtcState] = useState<RTCPeerConnectionState>("new");
 
   const createPC = useCallback(() => {
@@ -103,7 +103,7 @@ function useWebRTC(socket: Socket | null, sessionId: string | null) {
 
 // ─── Input sender (normalized coords) ────────────────────────────────────────
 function useInputSender(socket: Socket | null, sessionId: string | null) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const toNorm = useCallback((clientX: number, clientY: number) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -176,8 +176,8 @@ function StatusBadge({ state }: { state: ConnectionState }) {
 function ScreenViewer({
   videoRef, containerRef, sendPointer, sendScroll, active,
 }: {
-  videoRef: React.RefObject<HTMLVideoElement>;
-  containerRef: React.RefObject<HTMLDivElement>;
+videoRef: React.RefObject<HTMLVideoElement | null>;
+containerRef: React.RefObject<HTMLDivElement | null>;
   sendPointer: (t: string, x: number, y: number, b?: string) => void;
   sendScroll: (dx: number, dy: number) => void;
   active: boolean;
@@ -444,7 +444,7 @@ export default function App() {
   const [isSharing,    setIsSharing]    = useState(false);
   const [sharerPlatform, setSharerPlatform] = useState<string | null>(null);
   const sharingStreamRef = useRef<MediaStream | null>(null);
-  const localVideoRef    = useRef<HTMLVideoElement | null>(null);
+  const localVideoRef    = useRef<HTMLVideoElement>(null);
 
   const { videoRef, rtcState, pcRef, createPC } = useWebRTC(socket, sessionId);
   const { containerRef, sendPointer, sendKey, sendScroll } = useInputSender(socket, sessionId);
@@ -737,8 +737,6 @@ export default function App() {
       socket.off("input:scroll",  injectScroll);
     };
   }, [socket, controlActive, isController]);
-
-  // ── Disconnect cleans up sharing too ────────────────────────────────────
 
   // ── Browser Commands (controller sends, sharer executes) ─────────────────
   const [targetUrl, setTargetUrl] = useState("https://");
