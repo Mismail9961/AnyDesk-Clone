@@ -1,10 +1,3 @@
-/**
- * ╔══════════════════════════════════════════════════════════╗
- * ║        RemoteDesk — Web Dashboard (React 18 + Vite)     ║
- * ║   WebRTC Viewer · Session Control · Dark-Mode Premium   ║
- * ╚══════════════════════════════════════════════════════════╝
- */
-
 import React, {
   useState, useEffect, useRef, useCallback, useMemo,
 } from "react";
@@ -17,8 +10,7 @@ import {
   Globe, ArrowLeft, ArrowRight, RefreshCw, ExternalLink, X,
 } from "lucide-react";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:4000";
+const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "https://any-desk-clone-c22l.vercel.app/";
 
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -172,7 +164,6 @@ function StatusBadge({ state }: { state: ConnectionState }) {
   );
 }
 
-// ─── Remote Screen Viewer ─────────────────────────────────────────────────────
 function ScreenViewer({
   videoRef, containerRef, sendPointer, sendScroll, active,
 }: {
