@@ -27,9 +27,8 @@ interface ControlRequest { from: string; fromPlatform: string; fromRole: string;
 
 // ─── WebRTC hook ──────────────────────────────────────────────────────────────
 function useWebRTC(socket: Socket | null, sessionId: string | null) {
-  const pcRef      = useRef<RTCPeerConnection | null>(null);
-  const streamRef  = useRef<MediaStream | null>(null);
-  const videoRef   = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [rtcState, setRtcState] = useState<RTCPeerConnectionState>("new");
 
   const createPC = useCallback(() => {
@@ -43,7 +42,6 @@ function useWebRTC(socket: Socket | null, sessionId: string | null) {
 
     pc.ontrack = (e) => {
       const [remoteStream] = e.streams;
-      streamRef.current = remoteStream;
       if (videoRef.current) videoRef.current.srcObject = remoteStream;
     };
 
@@ -78,7 +76,7 @@ function useWebRTC(socket: Socket | null, sessionId: string | null) {
     });
 
     socket.on("rtc:ice", async ({ candidate }: { candidate: RTCIceCandidateInit }) => {
-      try { await pcRef.current?.addIceCandidate(candidate); } catch {}
+      try { await pcRef.current?.addIceCandidate(candidate); } catch { }
     });
 
     return () => {
@@ -93,7 +91,7 @@ function useWebRTC(socket: Socket | null, sessionId: string | null) {
   return { videoRef, rtcState, pcRef, createPC };
 }
 
-// ─── Input sender (normalized coords) ────────────────────────────────────────
+
 function useInputSender(socket: Socket | null, sessionId: string | null) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -102,7 +100,7 @@ function useInputSender(socket: Socket | null, sessionId: string | null) {
     if (!rect) return { x: 0, y: 0 };
     return {
       x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
-      y: Math.max(0, Math.min(1, (clientY - rect.top)  / rect.height)),
+      y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
     };
   }, []);
 
@@ -124,7 +122,6 @@ function useInputSender(socket: Socket | null, sessionId: string | null) {
   return { containerRef, sendPointer, sendKey, sendScroll };
 }
 
-// ─── SessionID display with groups ───────────────────────────────────────────
 function SessionID({ id }: { id: string }) {
   const [copied, setCopied] = useState(false);
   const groups = useMemo(() =>
@@ -149,10 +146,10 @@ function SessionID({ id }: { id: string }) {
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ state }: { state: ConnectionState }) {
   const map: Record<ConnectionState, { label: string; cls: string }> = {
-    idle:         { label: "Idle",         cls: "badge-idle"  },
-    connecting:   { label: "Connecting…",  cls: "badge-warn"  },
-    connected:    { label: "Live",         cls: "badge-live"  },
-    error:        { label: "Error",        cls: "badge-error" },
+    idle: { label: "Idle", cls: "badge-idle" },
+    connecting: { label: "Connecting…", cls: "badge-warn" },
+    connected: { label: "Live", cls: "badge-live" },
+    error: { label: "Error", cls: "badge-error" },
     disconnected: { label: "Disconnected", cls: "badge-error" },
   };
   const { label, cls } = map[state];
@@ -167,8 +164,8 @@ function StatusBadge({ state }: { state: ConnectionState }) {
 function ScreenViewer({
   videoRef, containerRef, sendPointer, sendScroll, active,
 }: {
-videoRef: React.RefObject<HTMLVideoElement | null>;
-containerRef: React.RefObject<HTMLDivElement | null>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   sendPointer: (t: string, x: number, y: number, b?: string) => void;
   sendScroll: (dx: number, dy: number) => void;
   active: boolean;
@@ -181,11 +178,11 @@ containerRef: React.RefObject<HTMLDivElement | null>;
       className={`screen-viewer ${active ? "screen-active" : "screen-placeholder"}`}
       onMouseMove={(e) => active && sendPointer("move", e.clientX, e.clientY)}
       onMouseDown={(e) => active && sendPointer("down", e.clientX, e.clientY, btnMap[e.button])}
-      onMouseUp={(e)   => active && sendPointer("up",   e.clientX, e.clientY, btnMap[e.button])}
-      onClick={(e)     => active && sendPointer("click", e.clientX, e.clientY, btnMap[e.button])}
+      onMouseUp={(e) => active && sendPointer("up", e.clientX, e.clientY, btnMap[e.button])}
+      onClick={(e) => active && sendPointer("click", e.clientX, e.clientY, btnMap[e.button])}
       onDoubleClick={(e) => active && sendPointer("dblclick", e.clientX, e.clientY)}
       onContextMenu={(e) => { e.preventDefault(); active && sendPointer("click", e.clientX, e.clientY, "right"); }}
-      onWheel={(e)     => active && sendScroll(e.deltaX, e.deltaY)}
+      onWheel={(e) => active && sendScroll(e.deltaX, e.deltaY)}
     >
       {active ? (
         <video ref={videoRef} autoPlay playsInline muted className="screen-video" />
@@ -209,10 +206,10 @@ function KeyboardOverlay({ sendKey, visible }: {
   const onKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     const mods: string[] = [];
-    if (e.ctrlKey)  mods.push("ctrl");
-    if (e.altKey)   mods.push("alt");
+    if (e.ctrlKey) mods.push("ctrl");
+    if (e.altKey) mods.push("alt");
     if (e.shiftKey) mods.push("shift");
-    if (e.metaKey)  mods.push("meta");
+    if (e.metaKey) mods.push("meta");
     sendKey(e.key, mods, "keydown");
   };
 
@@ -257,7 +254,6 @@ function BrowserControlPanel({
         </span>
       </div>
 
-      {/* URL bar */}
       <div className="browser-url-row">
         <input
           className="browser-url-input"
@@ -275,7 +271,6 @@ function BrowserControlPanel({
         </button>
       </div>
 
-      {/* Nav buttons */}
       <div className="browser-nav-btns">
         <button className="nav-btn" onClick={() => sendBrowserCmd("back")} title="Go back">
           <ArrowLeft size={12} /> Back
@@ -297,7 +292,6 @@ function BrowserControlPanel({
         </button>
       </div>
 
-      {/* JS console */}
       <div className="browser-js-row">
         <textarea
           className="browser-js-input"
@@ -337,7 +331,6 @@ function MobileControlPanel({
         </span>
       </div>
 
-      {/* Navigation */}
       <div className="mobile-ctrl-section">
         <div className="mobile-ctrl-section-label">Navigation</div>
         <div className="mobile-ctrl-btns">
@@ -353,7 +346,6 @@ function MobileControlPanel({
         </div>
       </div>
 
-      {/* System Actions */}
       <div className="mobile-ctrl-section">
         <div className="mobile-ctrl-section-label">System</div>
         <div className="mobile-ctrl-btns">
@@ -369,7 +361,6 @@ function MobileControlPanel({
         </div>
       </div>
 
-      {/* Advanced */}
       <div className="mobile-ctrl-section">
         <div className="mobile-ctrl-section-label">Advanced</div>
         <div className="mobile-ctrl-btns">
@@ -388,7 +379,6 @@ function MobileControlPanel({
         </div>
       </div>
 
-      {/* Text Input */}
       <div className="mobile-ctrl-section">
         <div className="mobile-ctrl-section-label">Text Input</div>
         <div className="mobile-ctrl-text-row">
@@ -414,33 +404,42 @@ function MobileControlPanel({
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [connState,    setConnState]    = useState<ConnectionState>("idle");
-  const [socket,       setSocket]       = useState<Socket | null>(null);
-  const [sessionId,    setSessionId]    = useState<string | null>(null);
-  const [inputSessId,  setInputSessId]  = useState("");
-  const [peers,        setPeers]        = useState<PeerInfo[]>([]);
-  const [viewMode,     setViewMode]     = useState<ViewMode>("viewer");
+  const [connState, setConnState] = useState<ConnectionState>("idle");
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [inputSessId, setInputSessId] = useState("");
+  const [peers, setPeers] = useState<PeerInfo[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("viewer");
   const [showKeyboard, setShowKeyboard] = useState(false);
-  const [error,        setError]        = useState<string | null>(null);
-  const [clipText,     setClipText]     = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [clipText, setClipText] = useState("");
+  const [paymentDismissed, setPaymentDismissed] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
-  // ── Remote Control state ─────────────────────────────────────────────────
-  const [controlStatus,  setControlStatus]  = useState<ControlStatus>("idle");
+  const [controlStatus, setControlStatus] = useState<ControlStatus>("idle");
   const [controlRequest, setControlRequest] = useState<ControlRequest | null>(null);
-  const [isController,   setIsController]   = useState(false);   // am I the active controller?
-  const [controlActive,  setControlActive]  = useState(false);   // is anyone controlling?
+  const [isController, setIsController] = useState(false);
+  const [controlActive, setControlActive] = useState(false);
 
-  // ── Screen sharing state ──────────────────────────────────────────────────
-  const [isSharing,    setIsSharing]    = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [sharerPlatform, setSharerPlatform] = useState<string | null>(null);
   const sharingStreamRef = useRef<MediaStream | null>(null);
-  const localVideoRef    = useRef<HTMLVideoElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
 
   const { videoRef, rtcState, pcRef, createPC } = useWebRTC(socket, sessionId);
   const { containerRef, sendPointer, sendKey, sendScroll } = useInputSender(socket, sessionId);
 
-  // ── Connect & create session ────────────────────────────────────────────
+  // Auto-show payment modal every 30 seconds if dismissed
+  useEffect(() => {
+    if (!paymentDismissed) return;
+    
+    const timer = setTimeout(() => {
+      setPaymentDismissed(false);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [paymentDismissed]);
+
   const createSession = useCallback(async () => {
     setError(null);
     setConnState("connecting");
@@ -461,7 +460,6 @@ export default function App() {
           setConnState("connected");
           setSocket(sock);
 
-          // Advertise screen dimensions
           sock.emit("peer:dimensions", {
             sessionId: res.sessionId,
             width: screen.width,
@@ -471,20 +469,18 @@ export default function App() {
         });
       });
 
-      sock.on("peer:joined",  ({ summary }: { summary: SessionSummary }) => setPeers(summary.peers));
-      sock.on("peer:left",    ({ summary }: { summary: SessionSummary }) => setPeers(summary.peers));
+      sock.on("peer:joined", ({ summary }: { summary: SessionSummary }) => setPeers(summary.peers));
+      sock.on("peer:left", ({ summary }: { summary: SessionSummary }) => setPeers(summary.peers));
       sock.on("session:expired", () => { setConnState("disconnected"); setSessionId(null); });
-      sock.on("disconnect",  () => setConnState("disconnected"));
+      sock.on("disconnect", () => setConnState("disconnected"));
       sock.on("connect_error", (e) => { setError(e.message); setConnState("error"); });
 
       sock.on("clipboard:sync", ({ text }: { text: string }) => setClipText(text));
 
-      // ── Screen state tracking ──────────────────────────────────────────
       sock.on("screen:state", ({ sharing, sharerPlatform: sp }: any) => {
         setSharerPlatform(sharing ? sp : null);
       });
 
-      // ── Control events ──────────────────────────────────────────────────
       sock.on("control:request", (req: ControlRequest) => {
         setControlRequest(req);
       });
@@ -511,7 +507,6 @@ export default function App() {
     }
   }, []);
 
-  // ── Join existing session ───────────────────────────────────────────────
   const joinSession = useCallback(async () => {
     const id = inputSessId.replace(/\s/g, "");
     if (id.length !== 9) { setError("Session ID must be 9 digits"); return; }
@@ -532,24 +527,21 @@ export default function App() {
           setPeers(res.summary.peers);
           setConnState("connected");
           setSocket(sock);
-          // Initiate WebRTC as viewer (receive-only)
           createPC();
         });
       });
 
-      sock.on("peer:joined",     ({ summary }: any) => setPeers(summary.peers));
-      sock.on("peer:left",       ({ summary }: any) => setPeers(summary.peers));
+      sock.on("peer:joined", ({ summary }: any) => setPeers(summary.peers));
+      sock.on("peer:left", ({ summary }: any) => setPeers(summary.peers));
       sock.on("session:expired", () => { setConnState("disconnected"); setSessionId(null); });
-      sock.on("disconnect",      () => setConnState("disconnected"));
-      sock.on("connect_error",   (e: any) => { setError(e.message); setConnState("error"); });
-      sock.on("clipboard:sync",  ({ text }: any) => setClipText(text));
+      sock.on("disconnect", () => setConnState("disconnected"));
+      sock.on("connect_error", (e: any) => { setError(e.message); setConnState("error"); });
+      sock.on("clipboard:sync", ({ text }: any) => setClipText(text));
 
-      // ── Screen state tracking ──────────────────────────────────────────
       sock.on("screen:state", ({ sharing, sharerPlatform: sp }: any) => {
         setSharerPlatform(sharing ? sp : null);
       });
 
-      // ── Control events ──────────────────────────────────────────────────
       sock.on("control:request", (req: ControlRequest) => {
         setControlRequest(req);
       });
@@ -575,7 +567,6 @@ export default function App() {
     }
   }, [inputSessId, createPC]);
 
-  // ── Disconnect ──────────────────────────────────────────────────────────
   const disconnect = useCallback(() => {
     sharingStreamRef.current?.getTracks().forEach((t: MediaStreamTrack) => t.stop());
     sharingStreamRef.current = null;
@@ -595,13 +586,11 @@ export default function App() {
     setControlRequest(null);
   }, [pcRef]);
 
-  // ── Clipboard push ──────────────────────────────────────────────────────
   const pushClipboard = useCallback(() => {
     if (!socket || !sessionId || !clipText) return;
     socket.emit("clipboard:sync", { sessionId, text: clipText });
   }, [socket, sessionId, clipText]);
 
-  // ── Control actions ─────────────────────────────────────────────────────
   const requestControl = useCallback(() => {
     if (!socket || !sessionId) return;
     setControlStatus("requesting");
@@ -628,7 +617,6 @@ export default function App() {
     setControlStatus("idle");
   }, [socket, sessionId]);
 
-  // ── Screen Share ─────────────────────────────────────────────────────────
   const startSharing = useCallback(async () => {
     if (!socket || !sessionId) return;
     try {
@@ -638,12 +626,10 @@ export default function App() {
       });
       sharingStreamRef.current = stream;
 
-      // Show local preview
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
 
-      // Add tracks to existing or new RTCPeerConnection and offer
       const pc = pcRef.current ?? createPC();
       stream.getTracks().forEach((track: MediaStreamTrack) => {
         pc.addTrack(track, stream);
@@ -658,12 +644,10 @@ export default function App() {
         dpr: devicePixelRatio,
       });
 
-      // Stop sharing when user clicks the browser's "Stop sharing" button
       stream.getVideoTracks()[0].addEventListener("ended", () => stopSharing());
     } catch (err: any) {
       if (err.name !== "NotAllowedError") setError("Screen share failed: " + err.message);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, sessionId, pcRef, createPC]);
 
   const stopSharing = useCallback(() => {
@@ -674,7 +658,6 @@ export default function App() {
     if (socket && sessionId) socket.emit("screen:stop", { sessionId });
   }, [socket, sessionId]);
 
-  // ── DOM Input Injection (runs on the SHARER side when being controlled) ──
   useEffect(() => {
     if (!socket || !controlActive || isController) return;
 
@@ -685,16 +668,15 @@ export default function App() {
       const btnNum = button === "right" ? 2 : button === "middle" ? 1 : 0;
       const evtMap: Record<string, string> = {
         move: "mousemove", down: "mousedown", up: "mouseup",
-        click: "click",    dblclick: "dblclick",
+        click: "click", dblclick: "dblclick",
       };
       el.dispatchEvent(new MouseEvent(evtMap[type] ?? "mousemove", {
         bubbles: true, cancelable: true,
         clientX: cx, clientY: cy,
         button: btnNum, buttons: type === "down" ? btnNum + 1 : 0,
       }));
-      // For input / contenteditable click — also focus
       if (type === "click" || type === "down") {
-        try { el.focus?.(); } catch {}
+        try { el.focus?.(); } catch { }
       }
     };
 
@@ -702,12 +684,11 @@ export default function App() {
       const el = (document.activeElement ?? document.body) as HTMLElement;
       el.dispatchEvent(new KeyboardEvent(eventType ?? "keydown", {
         bubbles: true, cancelable: true, key,
-        ctrlKey:  modifiers?.includes("ctrl"),
-        altKey:   modifiers?.includes("alt"),
+        ctrlKey: modifiers?.includes("ctrl"),
+        altKey: modifiers?.includes("alt"),
         shiftKey: modifiers?.includes("shift"),
-        metaKey:  modifiers?.includes("meta"),
+        metaKey: modifiers?.includes("meta"),
       }));
-      // For printable chars, also fire input event on active element
       if (key.length === 1 && el instanceof HTMLInputElement) {
         const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
         nativeInputValueSetter?.call(el, el.value + key);
@@ -720,16 +701,15 @@ export default function App() {
     };
 
     socket.on("input:pointer", injectPointer);
-    socket.on("input:key",     injectKey);
-    socket.on("input:scroll",  injectScroll);
+    socket.on("input:key", injectKey);
+    socket.on("input:scroll", injectScroll);
     return () => {
       socket.off("input:pointer", injectPointer);
-      socket.off("input:key",     injectKey);
-      socket.off("input:scroll",  injectScroll);
+      socket.off("input:key", injectKey);
+      socket.off("input:scroll", injectScroll);
     };
   }, [socket, controlActive, isController]);
 
-  // ── Browser Commands (controller sends, sharer executes) ─────────────────
   const [targetUrl, setTargetUrl] = useState("https://");
 
   const sendBrowserCmd = useCallback((type: string, payload: Record<string, any> = {}) => {
@@ -737,7 +717,6 @@ export default function App() {
     socket.emit("browser:cmd", { sessionId, type, payload });
   }, [socket, sessionId, isController]);
 
-  // ── Mobile Remote Control helpers ──────────────────────────────────────
   const sendRemoteAction = useCallback((action: string, payload: Record<string, any> = {}) => {
     if (!socket || !sessionId || !isController) return;
     const map: Record<string, string> = {
@@ -757,7 +736,6 @@ export default function App() {
 
   const isMobileSharer = sharerPlatform === "android" || sharerPlatform === "ios";
 
-  // Sharer: execute incoming browser commands
   useEffect(() => {
     if (!socket || !controlActive || isController) return;
 
@@ -788,8 +766,7 @@ export default function App() {
           window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
           break;
         case "execute_js":
-          // eslint-disable-next-line no-eval
-          if (payload?.code) { try { eval(payload.code); } catch {} }
+          if (payload?.code) { try { eval(payload.code); } catch { } }
           break;
       }
     };
@@ -799,13 +776,12 @@ export default function App() {
   }, [socket, controlActive, isController]);
 
   const isConnected = connState === "connected";
-  const hasVideo    = rtcState === "connected";
-  const hostOnline  = peers.some(p => p.role === "host" && p.ready);
-  const hasPeers    = peers.length > 1;
+  const hasVideo = rtcState === "connected";
+  const hostOnline = peers.some(p => p.role === "host" && p.ready);
+  const hasPeers = peers.length > 1;
 
   return (
     <>
-      {/* ── Global styles ─────────────────────────────────────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
 
@@ -834,7 +810,6 @@ export default function App() {
         html, body, #root { height: 100%; background: var(--bg); color: var(--text); }
         body { font-family: var(--font-ui); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 
-        /* ── Layout ────────────────────────────────────────────────────── */
         .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         .topbar {
@@ -850,7 +825,6 @@ export default function App() {
 
         .main { display: flex; flex: 1; overflow: hidden; }
 
-        /* ── Sidebar ───────────────────────────────────────────────────── */
         .sidebar {
           width: 280px; flex-shrink: 0;
           border-right: 1px solid var(--border);
@@ -866,7 +840,6 @@ export default function App() {
           margin-bottom: 8px;
         }
 
-        /* ── Cards ─────────────────────────────────────────────────────── */
         .card {
           background: var(--bg3);
           border: 1px solid var(--border);
@@ -875,7 +848,6 @@ export default function App() {
         }
         .card + .card { margin-top: 0; }
 
-        /* ── Buttons ───────────────────────────────────────────────────── */
         .btn {
           display: inline-flex; align-items: center; justify-content: center; gap: 6px;
           padding: 9px 16px; border-radius: var(--r-sm);
@@ -901,7 +873,6 @@ export default function App() {
         }
         .icon-btn:hover { color: var(--text); }
 
-        /* ── Inputs ────────────────────────────────────────────────────── */
         .input {
           width: 100%; background: var(--bg);
           border: 1px solid var(--border); border-radius: var(--r-sm);
@@ -911,7 +882,6 @@ export default function App() {
         .input:focus { border-color: var(--accent); }
         .input::placeholder { color: var(--text-mute); }
 
-        /* ── Session ID ────────────────────────────────────────────────── */
         .session-id-block {
           display: flex; align-items: center; gap: 8px;
           background: var(--bg); border: 1px solid var(--accent);
@@ -922,7 +892,6 @@ export default function App() {
           font-weight: 500; letter-spacing: 2px; color: var(--accent);
         }
 
-        /* ── Badge ─────────────────────────────────────────────────────── */
         .badge {
           display: inline-flex; align-items: center; gap: 5px;
           padding: 3px 10px; border-radius: 100px;
@@ -933,7 +902,6 @@ export default function App() {
         .badge-live  { background: rgba(34,197,94,.12);   color: var(--green);  }
         .badge-error { background: rgba(239,68,68,.12);   color: var(--red);    }
 
-        /* ── Peers list ────────────────────────────────────────────────── */
         .peers-list { display: flex; flex-direction: column; gap: 6px; }
         .peer-row {
           display: flex; align-items: center; gap: 8px;
@@ -946,7 +914,6 @@ export default function App() {
         .peer-platform { color: var(--text-dim); }
         .peer-ready { margin-left: auto; color: var(--green); font-size: 10px; }
 
-        /* ── Tab switcher ──────────────────────────────────────────────── */
         .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg); border-radius: var(--r-sm); border: 1px solid var(--border); }
         .tab {
           flex: 1; padding: 6px 10px; border-radius: 4px;
@@ -956,10 +923,8 @@ export default function App() {
         }
         .tab.active { background: var(--accent); color: #fff; }
 
-        /* ── Content area ──────────────────────────────────────────────── */
         .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 24px; gap: 16px; }
 
-        /* ── Screen viewer ─────────────────────────────────────────────── */
         .screen-viewer {
           flex: 1; border-radius: var(--r);
           border: 1px solid var(--border);
@@ -975,10 +940,7 @@ export default function App() {
         }
         .empty-icon { opacity: .3; }
 
-        /* ── Keyboard overlay ──────────────────────────────────────────── */
-        .keyboard-overlay {
-          padding: 12px 0 0;
-        }
+        .keyboard-overlay { padding: 12px 0 0; }
         .keyboard-input {
           width: 100%; height: 80px; resize: none;
           background: var(--bg); border: 1px solid var(--border);
@@ -988,11 +950,9 @@ export default function App() {
         }
         .keyboard-input:focus { border-color: var(--accent); }
 
-        /* ── Clipboard ─────────────────────────────────────────────────── */
         .clip-area { display: flex; gap: 8px; }
         .clip-area .input { font-size: 12px; }
 
-        /* ── Error bar ─────────────────────────────────────────────────── */
         .error-bar {
           display: flex; align-items: center; gap: 8px;
           background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
@@ -1000,7 +960,6 @@ export default function App() {
           color: var(--red); font-size: 13px;
         }
 
-        /* ── Stats row ─────────────────────────────────────────────────── */
         .stats-row { display: flex; gap: 8px; align-items: center; font-size: 11px; color: var(--text-dim); }
         .stat-pill {
           display: flex; align-items: center; gap: 4px;
@@ -1008,10 +967,8 @@ export default function App() {
           border-radius: 100px; padding: 3px 10px;
         }
 
-        /* ── Divider ───────────────────────────────────────────────────── */
         .divider { height: 1px; background: var(--border); margin: 4px 0; }
 
-        /* ── Download section ───────────────────────────────────────────── */
         .download-card {
           background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.06) 100%);
           border: 1px solid rgba(59,130,246,0.2);
@@ -1087,7 +1044,6 @@ export default function App() {
           display: flex; align-items: center; gap: 4px; line-height: 1.4;
         }
 
-        /* ── Remote Control UI ─────────────────────────────────────────── */
         .ctrl-active-pill {
           display: flex; align-items: center; gap: 7px;
           padding: 7px 12px; border-radius: var(--r-sm);
@@ -1105,7 +1061,6 @@ export default function App() {
         .live-dot-warn { background: var(--yellow); }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-        /* ── Control banner ────────────────────────────────────────────── */
         .ctrl-banner {
           display: flex; align-items: center; gap: 8px;
           padding: 9px 14px; border-radius: var(--r-sm);
@@ -1118,7 +1073,6 @@ export default function App() {
           background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.25); color: var(--yellow);
         }
 
-        /* ── Permission Modal ──────────────────────────────────────────── */
         .perm-overlay {
           position: fixed; inset: 0; z-index: 1000;
           background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
@@ -1146,37 +1100,89 @@ export default function App() {
         .perm-actions { display: flex; gap: 10px; }
         .perm-actions .btn { flex: 1; }
 
-        /* ── Responsive ────────────────────────────────────────────────── */
-        @media (max-width: 768px) {
-          .sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); }
-          .main { flex-direction: column; }
-          .content { padding: 12px; }
+        .payment-overlay {
+          position: fixed; inset: 0; z-index: 9999;
+          background: rgba(0,0,0,.85); backdrop-filter: blur(10px);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .payment-modal {
+          background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+          border: 2px solid rgba(59,130,246,.5);
+          border-radius: 24px; padding: 50px 40px;
+          max-width: 480px; width: 95%; text-align: center;
+          box-shadow: 0 0 80px rgba(59,130,246,.4), 0 30px 100px rgba(0,0,0,.9);
+          animation: payment-in .4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes payment-in { 
+          from { transform: scale(0.8) translateY(30px); opacity: 0; } 
+          to { transform: scale(1) translateY(0); opacity: 1; } 
+        }
+        .payment-icon {
+          width: 80px; height: 80px; border-radius: 50%;
+          background: linear-gradient(135deg, rgba(59,130,246,.3), rgba(139,92,246,.2));
+          border: 2px solid rgba(59,130,246,.5);
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 24px; color: var(--accent);
+          animation: pulse-icon 2s ease-in-out infinite;
+        }
+        @keyframes pulse-icon { 
+          0%, 100% { transform: scale(1); } 
+          50% { transform: scale(1.1); } 
+        }
+        .payment-title {
+          font-size: 28px; font-weight: 800; margin-bottom: 16px;
+          background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .payment-body {
+          font-size: 15px; color: var(--text-dim); line-height: 1.8; margin-bottom: 32px;
+        }
+        .payment-body strong { color: var(--text); font-weight: 700; }
+        .payment-highlight {
+          background: linear-gradient(135deg, rgba(59,130,246,.2) 0%, rgba(139,92,246,.1) 100%);
+          border: 1px solid rgba(59,130,246,.3);
+          border-radius: var(--r);
+          padding: 16px;
+          margin: 24px 0;
+          color: var(--accent);
+          font-weight: 700;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+        .payment-actions {
+          display: flex; gap: 12px; flex-direction: column;
+        }
+        .payment-actions .btn { width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 700; }
+        .btn-pay {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          color: #fff; border: none;
+          box-shadow: 0 8px 32px rgba(59,130,246,.4);
+          transition: all .3s ease;
+        }
+        .btn-pay:hover {
+          box-shadow: 0 12px 48px rgba(59,130,246,.6);
+          transform: translateY(-3px);
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+        .btn-remind-later {
+          background: rgba(59,130,246,.08);
+          border: 2px solid rgba(59,130,246,.3);
+          color: var(--text-dim);
+          transition: all .3s ease;
+        }
+        .btn-remind-later:hover {
+          border-color: var(--accent);
+          color: var(--text);
+          background: rgba(59,130,246,.15);
+          box-shadow: 0 0 24px rgba(59,130,246,.2);
+        }
+        .payment-footer {
+          font-size: 12px; color: var(--text-mute); margin-top: 20px;
+          display: flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.6;
         }
 
-        /* ── Animations ────────────────────────────────────────────────── */
-        @keyframes pulse-ring {
-          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
-          70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
-          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-        }
-        /* ── Local preview card ───────────────────────────────────────────── */
-        .local-preview-card {
-          flex-shrink: 0;
-          background: var(--bg3); border: 1px solid rgba(59,130,246,.25);
-          border-radius: var(--r); overflow: hidden;
-          box-shadow: 0 0 0 1px rgba(59,130,246,.08), 0 4px 24px rgba(0,0,0,.3);
-        }
-        .local-preview-label {
-          display: flex; align-items: center; gap: 7px;
-          padding: 8px 12px; border-bottom: 1px solid var(--border);
-          font-size: 11px; font-weight: 700; color: var(--accent);
-        }
-        .local-preview-video {
-          width: 100%; max-height: 140px;
-          object-fit: contain; display: block; background: #000;
-        }
-
-        /* ── Browser Control Panel ───────────────────────────────────────── */
         .browser-panel {
           flex-shrink: 0;
           background: var(--bg3); border: 1px solid rgba(59,130,246,.3);
@@ -1230,7 +1236,6 @@ export default function App() {
 
         .live-pulse { animation: pulse-ring 2s infinite; border-radius: 50%; }
 
-        /* ── Mobile Control Panel ──────────────────────────────────────────── */
         .mobile-ctrl-panel {
           flex-shrink: 0;
           background: var(--bg3); border: 1px solid rgba(34,197,94,.3);
@@ -1298,7 +1303,84 @@ export default function App() {
           background: rgba(34,197,94,.12) !important;
           border-color: var(--green) !important;
         }
+
+        .local-preview-card {
+          flex-shrink: 0;
+          background: var(--bg3); border: 1px solid rgba(59,130,246,.25);
+          border-radius: var(--r); overflow: hidden;
+          box-shadow: 0 0 0 1px rgba(59,130,246,.08), 0 4px 24px rgba(0,0,0,.3);
+        }
+        .local-preview-label {
+          display: flex; align-items: center; gap: 7px;
+          padding: 8px 12px; border-bottom: 1px solid var(--border);
+          font-size: 11px; font-weight: 700; color: var(--accent);
+        }
+        .local-preview-video {
+          width: 100%; max-height: 140px;
+          object-fit: contain; display: block; background: #000;
+        }
+
+        @media (max-width: 768px) {
+          .sidebar { width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); }
+          .main { flex-direction: column; }
+          .content { padding: 12px; }
+          .payment-modal { padding: 40px 24px; }
+          .payment-title { font-size: 24px; }
+        }
+
+        @keyframes pulse-ring {
+          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
+          70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
       `}</style>
+
+      {/* ────── PERSISTENT PAYMENT MODAL ────────────────────────────────────────────────── */}
+      {!paymentDismissed && (
+        <div className="payment-overlay">
+          <div className="payment-modal">
+            <div className="payment-icon">
+              <Zap size={44} />
+            </div>
+
+            <h2 className="payment-title">Payment Required</h2>
+
+            <p className="payment-body">
+              Your <strong>RemoteDesk</strong> subscription requires payment to continue. 
+              <br />
+              <strong>Complete payment now</strong> to unlock full access and enjoy uninterrupted remote control.
+            </p>
+
+            <div className="payment-highlight">
+              <div>⏰ Your free trial has ended</div>
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-dim)' }}>3 billing cycles remaining</div>
+            </div>
+
+            <div className="payment-actions">
+              <button
+                className="btn btn-pay"
+                onClick={() => {
+                  window.location.href = "https://your-payment-page.com/checkout";
+                }}
+              >
+                <Zap size={18} />
+                💳 Pay Now & Unlock Access
+              </button>
+
+              <button
+                className="btn btn-remind-later"
+                onClick={() => setPaymentDismissed(true)}
+              >
+                ⏱️ Remind Me Later (30 seconds)
+              </button>
+            </div>
+
+            <p className="payment-footer">
+              💳 Secure SSL payment • 🔒 Encrypted data • ✓ Cancel anytime
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="app">
         {/* ── Topbar ─────────────────────────────────────────────────────── */}
@@ -1322,7 +1404,6 @@ export default function App() {
         <div className="main">
           {/* ── Sidebar ──────────────────────────────────────────────────── */}
           <aside className="sidebar">
-            {/* Connection */}
             <div>
               <p className="section-label">Session</p>
               {!isConnected ? (
@@ -1358,7 +1439,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Peers */}
             {isConnected && (
               <div>
                 <p className="section-label">Peers ({peers.length})</p>
@@ -1378,7 +1458,6 @@ export default function App() {
               </div>
             )}
 
-            {/* View Mode */}
             {isConnected && (
               <div>
                 <p className="section-label">Mode</p>
@@ -1393,7 +1472,6 @@ export default function App() {
               </div>
             )}
 
-            {/* ── Share Screen ──────────────────────────────────────── */}
             {isConnected && (
               <div>
                 <p className="section-label">Share Screen</p>
@@ -1420,25 +1498,23 @@ export default function App() {
               </div>
             )}
 
-            {/* ── Remote Control Request ───────────────────────────────── */}
             {isConnected && hasPeers && (
               <div>
                 <p className="section-label">Remote Control</p>
                 {!controlActive && !isController && (
                   <button
-                    className={`btn ${
-                      controlStatus === "requesting" ? "btn-ghost" :
-                      controlStatus === "granted"    ? "btn-primary" :
-                      "btn-ghost"
-                    }`}
+                    className={`btn ${controlStatus === "requesting" ? "btn-ghost" :
+                        controlStatus === "granted" ? "btn-primary" :
+                          "btn-ghost"
+                      }`}
                     onClick={requestControl}
                     disabled={controlStatus === "requesting"}
                     style={{ gap: 7 }}
                   >
                     <MousePointer2 size={14} />
                     {controlStatus === "requesting" ? "Waiting for permission…" :
-                     controlStatus === "denied"     ? "Request Denied" :
-                     "Request Control"}
+                      controlStatus === "denied" ? "Request Denied" :
+                        "Request Control"}
                   </button>
                 )}
                 {controlActive && isController && (
@@ -1466,7 +1542,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Keyboard */}
             {isConnected && viewMode === "controller" && (
               <div>
                 <p className="section-label">Keyboard</p>
@@ -1478,7 +1553,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Clipboard */}
             {isConnected && (
               <div>
                 <p className="section-label">Clipboard</p>
@@ -1496,7 +1570,6 @@ export default function App() {
               </div>
             )}
 
-            {/* ── Download Desktop App ─────────────────────────────────── */}
             <div>
               <p className="section-label">Desktop App</p>
               <div className="download-card">
@@ -1539,7 +1612,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* ── Download Mobile App ──────────────────────────────────── */}
             <div>
               <p className="section-label">Mobile App</p>
               <div className="download-card-mobile">
@@ -1552,7 +1624,6 @@ export default function App() {
                   View & control remote PCs from your phone or tablet.
                 </p>
                 <div className="download-btns">
-                  {/* iOS — App Store */}
                   <a
                     className="dl-btn-ios"
                     href="https://apps.apple.com/app/remotedesk"
@@ -1561,7 +1632,7 @@ export default function App() {
                     title="Download on the App Store"
                   >
                     <svg width="14" height="14" viewBox="0 0 814 1000" fill="currentColor" style={{ flexShrink: 0 }}>
-                      <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-43.4-150.3-109.2C80.6 680.8 1 576.9 1 470.8c0-204.6 132.4-312.6 261.7-312.6 69.6 0 127.7 45.5 170.8 45.5 41.5 0 107.3-47.6 183.9-47.6 29.3 0 108.2 3.2 162.8 57.7zm-156.3-175.3c30.2-35.5 51.6-84.7 51.6-133.9 0-6.9-.6-13.9-1.9-19.5-48.9 1.9-108.2 32.6-143.7 73.1-27.6 30.8-53.3 80-53.3 130.5 0 7.5 1.3 14.9 1.9 17.2 3.2.6 8.4 1.3 13.6 1.3 43.4 0 97.9-29.2 131.8-68.7z"/>
+                      <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-43.4-150.3-109.2C80.6 680.8 1 576.9 1 470.8c0-204.6 132.4-312.6 261.7-312.6 69.6 0 127.7 45.5 170.8 45.5 41.5 0 107.3-47.6 183.9-47.6 29.3 0 108.2 3.2 162.8 57.7zm-156.3-175.3c30.2-35.5 51.6-84.7 51.6-133.9 0-6.9-.6-13.9-1.9-19.5-48.9 1.9-108.2 32.6-143.7 73.1-27.6 30.8-53.3 80-53.3 130.5 0 7.5 1.3 14.9 1.9 17.2 3.2.6 8.4 1.3 13.6 1.3 43.4 0 97.9-29.2 131.8-68.7z" />
                     </svg>
                     <div style={{ flex: 1, textAlign: "left" }}>
                       <div style={{ fontWeight: 700, color: "#a78bfa" }}>iOS</div>
@@ -1572,7 +1643,6 @@ export default function App() {
 
                   <div className="dl-divider-mobile" />
 
-                  {/* Android — Direct APK + Play Store */}
                   <a
                     className="dl-btn-android"
                     href="/downloads/RemoteDesk-Android.apk"
@@ -1580,7 +1650,7 @@ export default function App() {
                     title="Download APK for Android"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                      <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 0 0-.83.22l-1.88 3.24a11.463 11.463 0 0 0-8.94 0L5.65 5.67a.643.643 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 0 0 1 18h22a10.78 10.78 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"/>
+                      <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 0 0-.83.22l-1.88 3.24a11.463 11.463 0 0 0-8.94 0L5.65 5.67a.643.643 0 0 0-.87-.2c-.28.18-.37.54-.22.83L6.4 9.48A10.78 10.78 0 0 0 1 18h22a10.78 10.78 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z" />
                     </svg>
                     <div style={{ flex: 1, textAlign: "left" }}>
                       <div style={{ fontWeight: 700, color: "var(--green)" }}>Android</div>
@@ -1596,7 +1666,7 @@ export default function App() {
                     title="Get it on Google Play"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
-                      <path d="M3.18 23.76c.35.2.74.24 1.12.14l12.02-12.02-2.93-2.92L3.18 23.76zM20.7 10.06l-2.87-1.62-3.29 3.29 3.29 3.29 2.89-1.63c.82-.46.82-1.87-.02-2.33zM1.05 1.52C1.02 1.67 1 1.84 1 2.02v19.96c0 .18.02.35.05.5l12.32-12.32L1.05 1.52zM4.3.1L16.32 6.76 13.39 9.7 1.42.14C1.79.04 2.2.08 2.55.28L4.3.1z"/>
+                      <path d="M3.18 23.76c.35.2.74.24 1.12.14l12.02-12.02-2.93-2.92L3.18 23.76zM20.7 10.06l-2.87-1.62-3.29 3.29 3.29 3.29 2.89-1.63c.82-.46.82-1.87-.02-2.33zM1.05 1.52C1.02 1.67 1 1.84 1 2.02v19.96c0 .18.02.35.05.5l12.32-12.32L1.05 1.52zM4.3.1L16.32 6.76 13.39 9.7 1.42.14C1.79.04 2.2.08 2.55.28L4.3.1z" />
                     </svg>
                     <div style={{ flex: 1, textAlign: "left" }}>
                       <div style={{ fontWeight: 700, color: "var(--green)" }}>Android</div>
@@ -1616,7 +1686,6 @@ export default function App() {
 
           {/* ── Content ─────────────────────────────────────────────────── */}
           <main className="content">
-            {/* ── Permission Modal (incoming control request) ───────────── */}
             {controlRequest && (
               <div className="perm-overlay">
                 <div className="perm-modal">
@@ -1638,13 +1707,12 @@ export default function App() {
               </div>
             )}
 
-            {/* ── Active Control Banner ─────────────────────────────────── */}
             {controlActive && (
               <div className={`ctrl-banner ${isController ? "ctrl-banner-green" : "ctrl-banner-yellow"}`}>
                 {isController ? (
-                  <><MousePointer2 size={13} /> You have remote control — move carefully<span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>ESC to release</span></>
+                  <><MousePointer2 size={13} /> You have remote control — move carefully<span style={{ marginLeft: "auto", fontSize: 11, opacity: .7 }}>ESC to release</span></>
                 ) : (
-                  <><Shield size={13} /> Your screen is being controlled remotely<span style={{marginLeft:"auto",fontSize:11,opacity:.7}}>Click "Revoke Access" to stop</span></>
+                  <><Shield size={13} /> Your screen is being controlled remotely<span style={{ marginLeft: "auto", fontSize: 11, opacity: .7 }}>Click "Revoke Access" to stop</span></>
                 )}
               </div>
             )}
@@ -1670,12 +1738,11 @@ export default function App() {
             <ScreenViewer
               videoRef={videoRef}
               containerRef={containerRef}
-              sendPointer={viewMode === "controller" ? sendPointer : () => {}}
-              sendScroll={viewMode === "controller" ? sendScroll : () => {}}
+              sendPointer={viewMode === "controller" ? sendPointer : () => { }}
+              sendScroll={viewMode === "controller" ? sendScroll : () => { }}
               active={hasVideo}
             />
 
-            {/* ── Control Panels (shown to active controller) ──────────── */}
             {controlActive && isController && (
               isMobileSharer ? (
                 <MobileControlPanel
@@ -1691,7 +1758,6 @@ export default function App() {
               )
             )}
 
-            {/* ── Local screen-share preview ────────────────────────────── */}
             {isSharing && (
               <div className="local-preview-card">
                 <div className="local-preview-label">
